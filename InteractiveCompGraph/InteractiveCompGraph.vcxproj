@@ -75,7 +75,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\Users\Ming Zi\Documents\InteractiveCompGraph\InteractiveCompGraph\Middleware\freeglut\include;C:\Users\Ming Zi\Documents\InteractiveCompGraph\InteractiveCompGraph\InteractiveCompGraph;C:\Users\Ming Zi\Documents\InteractiveCompGraph\InteractiveCompGraph\InteractiveCompGraph\Files;C:\Users\Ming Zi\Documents\InteractiveCompGraph\InteractiveCompGraph\Middleware\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
     </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\Users\Ming Zi\Documents\InteractiveCompGraph\InteractiveCompGraph\Middleware\freeglut\lib;C:\Users\Ming Zi\Documents\InteractiveCompGraph\InteractiveCompGraph\Middleware\glew-2.1.0\lib\Release\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>freeglut.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -111,6 +118,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="object.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="initialization.h" />
+    <ClInclude Include="object.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
