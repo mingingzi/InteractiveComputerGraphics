@@ -118,12 +118,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="camera.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="object.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="camera.h" />
+    <ClInclude Include="Files\cyMatrix.h" />
     <ClInclude Include="initialization.h" />
     <ClInclude Include="object.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\objectShaderFrag.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
