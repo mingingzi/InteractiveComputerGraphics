@@ -4,18 +4,6 @@
 #include "cyTriMesh.h"
 #include "cyMatrix.h"
 
-enum Direction {				//camera direction
-	LEFT = 0x10,
-	RIGHT,
-	UP,
-	DOWN
-	//FORWARD,
-	//BACKWARD,
-	//NORTHEAST,
-	//NORTHWEST,
-	//SOUTHWEST,
-	//SOUTHEAST
-};
 
 class camera {
 private:
@@ -32,7 +20,7 @@ private:
 
 	static const float ROTATION_ANGLE;
 	static const float MOVEMENT_SPEED;
-	cyPoint3f strafeDirection;
+
 	cyMatrix4f IdentityMatrix;
 	int frustum;
 public:
@@ -43,6 +31,6 @@ public:
 	cyMatrix4f returnVtoPMatrix();
 	cyMatrix4f returnWtoPMatrix();
 	void rotate(int dx, int dy);
-	camera translate(int dx, int dy, cyPoint3f objectCenter);
+	void translate(int dx, int dy, cyPoint3f objectCenter);
 	void frustomSwitch(int);
 };

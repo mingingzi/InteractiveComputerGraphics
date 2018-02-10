@@ -53,24 +53,41 @@ void object::getNormal(cyTriMesh mesh) {
 }
 
 void object::calModelMatrix(cyTriMesh mesh) {
+	MtoWMatrix.SetIdentity();
+	
+
 	mesh.ComputeBoundingBox();
 	cyPoint3f Max = mesh.GetBoundMax();
 	cyPoint3f Min = mesh.GetBoundMin();
-	cyPoint3f center = objectCenter; cyMatrix4f scale;
+	cyPoint3f center; cyMatrix4f scale;
+	center = cyPoint3f((Max.x + Min.x) / 2, (Max.y + Min.y) / 2, (Max.z + Min.z) / 2);
 	cyPoint3f bound = (Max - Min);
 	scale.SetScale(1.0f / std::max(bound[0], std::max(bound[1], bound[2])));
-	MtoWMatrix.SetIdentity();
-	//MtoWMatrix.AddTrans(-1 * center);
-	MtoWMatrix *= scale;
+	//MtoWMatrix *= scale;
 	MtoWMatrix = cy::Matrix4f::MatrixRotationX(-90) * MtoWMatrix;
-
+	//MtoWMatrix.SetIdentity();
+	
+	MtoWMatrix.AddTrans(-1 * (Max+Min)/2);
 }
 
+void object::calNormalMatrix(cyMatrix4f MtoWMatrix) {
+
+	cyMatrix3f M = MtoWMatrix.GetSubMatrix3();
+	M.Invert();
+	M.Transpose();
+	float temp[9];
+	M.Get(temp);
+	float new_temp[16] = { temp[0], temp[1], temp[2], 0, temp[3], temp[4], temp[5], 0, temp[6],
+		temp[7], temp[8], 0, 0, 0, 0, 1 };
+	normalMatrix.Set(new_temp);
+}
 
 object::object(char *filename) {
 	object::getMesh(filename);
 	object::getVertex(mesh);
+	object::getNormal(mesh);
 	object::calModelMatrix(mesh);
+	object::calNormalMatrix(MtoWMatrix);
 	numFace = mesh.NF();
 }
 
@@ -89,6 +106,11 @@ cyPoint3f* object::returnNormal() {
 cyMatrix4f object::returnMtoWMatrix() {
 	return MtoWMatrix;
 }
+
+cyMatrix4f object::returnNormalMatrix() {
+	return normalMatrix;
+}
+
 cyPoint3f object::returnObjectCenter() {
 	cyPoint3f Max = mesh.GetBoundMax();
 	cyPoint3f Min = mesh.GetBoundMin();

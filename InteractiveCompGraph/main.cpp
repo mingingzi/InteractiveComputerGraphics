@@ -6,6 +6,7 @@
 
 #include <initialization.h>
 #include <object.h>
+#include "light.h"
 #include <camera.h>
 
 
@@ -13,18 +14,21 @@ object teapot;
 cyGLSLProgram teapotShader;
 GLuint teapotVAO;
 GLuint teapotV_VBO;
+GLuint teapotN_VBO;
+
 camera Camera;
+light Light;
 
-object initObject(char *filename);
-camera initCamera();
-
-cyPoint3f position = cyPoint3f(0.0f, 0.0f, -2.0f);
+cyPoint3f position = cyPoint3f(0.0f, 0.0f, -50.0f);
 cyPoint3f front = cyPoint3f(0.0f, 0.0f, 2.0f);
 cyPoint3f up = cyPoint3f(0.0f, 1.0f, 0.0f);
 
 int frustum = 0;
 int mouseState, mouseButton, mousex = 0, mousey = 0;
 
+object initObject(char *filename);
+camera initCamera();
+light initLight();
 object initObject(char *filename) {
 	object object(filename);
 	return object;
@@ -32,16 +36,25 @@ object initObject(char *filename) {
 void initObjectVAO() {
 	int numF = teapot.returnNumFace();
 	cyPoint3f* newVertex = teapot.returnVertex();
-
+	cyPoint3f* newNormal = teapot.returnNormal();
 	glGenVertexArrays(1, &teapotVAO);
 	glBindVertexArray(teapotVAO);
+
+	// teapot vertex buffer
 	glGenBuffers(1, &teapotV_VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, teapotV_VBO);
-
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cyPoint3f) * numF * 3, newVertex, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, teapotV_VBO);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	// teapot normal buffer
+	glGenBuffers(1, &teapotN_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, teapotN_VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cyPoint3f) * numF * 3, newNormal, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, teapotN_VBO);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	glBindVertexArray(0);
 }
@@ -56,19 +69,31 @@ camera initCamera() {
 	return Camera;
 }
 
+light initLight() {
+	cyPoint3f position = cyPoint3f(0.0f, 0.0f, -50.0f);
+	cyPoint3f front = cyPoint3f(0.0f, 0.0f, 2.0f);
+	cyPoint3f up = cyPoint3f(0.0f, 1.0f, 0.0f);
+	light Light(position, front, up);
+	return Light;
+}
+
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	Camera.frustomSwitch(frustum);
+	int numF = teapot.returnNumFace();
 	teapotShader.Bind();
 	teapotShader.SetUniform(0, Camera.returnVtoPMatrix());
 	teapotShader.SetUniform(1, Camera.returnWtoVMatrix());
 	teapotShader.SetUniform(2, teapot.returnMtoWMatrix());
+	teapotShader.SetUniform(3, teapot.returnNormalMatrix());
+	teapotShader.SetUniform(4, Light.returnLightPosition());
+	teapotShader.SetUniform(5, Light.returnLightWtoVMatrix());
+	teapotShader.SetUniform(6, Camera.returnPosition());
 
 	glBindVertexArray(teapotVAO);
-	int numF = teapot.returnNumFace();
-	glDrawArrays(GL_POINTS, 0, sizeof(cyPoint3f) * numF);
+	glDrawArrays(GL_TRIANGLES, 0, sizeof(cyPoint3f) * numF);
 	glBindVertexArray(0);
 	//glDisableVertexAttribArray(0);
 
@@ -89,7 +114,7 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 	case 'p':									// 0 perspective
 		if (frustum == 0) {
-			frustum = 1;			// 1 orthogonal
+			frustum = 1;						// 1 orthogonal
 		}else if (frustum == 1) {
 			frustum = 0;
 		}
@@ -118,26 +143,37 @@ void mouse(int button, int state, int x, int y)
 
 void mouseMotion(int x, int y)
 {
-	if (mouseState == GLUT_DOWN) {
-		// left button to adjust camera angle
-		if (mouseButton == GLUT_LEFT_BUTTON) {
-			int dx = x - mousex, dy = y - mousey;
-			Camera.rotate(dx, dy);
+	int dx = x - mousex, dy = y - mousey;
+	int mod = glutGetModifiers();
+	//rotate light
+	if (mod == GLUT_ACTIVE_CTRL)
+	{
+		if (mouseState == GLUT_DOWN) {
+			// left button to adjust camera angle
+			if (mouseButton == GLUT_LEFT_BUTTON) {
+				Light.rotate(dx, dy);
+			}
 
-			mousex = x;
-			mousey = y;
-			//glutPostRedisplay();
 		}
-		// right button to adjust camera distance
-		else if (mouseButton == GLUT_RIGHT_BUTTON) {
-			int dx = x - mousex, dy = y - mousey;
-			Camera = Camera.translate(dx, dy, teapot.returnObjectCenter());
+	}
+	//rotate camera
+	else {
+		if (mouseState == GLUT_DOWN) {
+			// left button to adjust camera angle
+			if (mouseButton == GLUT_LEFT_BUTTON) {
+				Camera.rotate(dx, dy);
+				mousex = x;
+				mousey = y;
+			}
+			// right button to adjust camera distance
+			else if (mouseButton == GLUT_RIGHT_BUTTON) {
+				Camera.translate(dx, dy, teapot.returnObjectCenter());
+				mousex = x;
+				mousey = y;
+			}
+			else {
 
-			mousex = x;
-			mousey = y;
-		}
-		else {
-
+			}
 		}
 	}
 }
@@ -151,6 +187,8 @@ void initialize(int argc, char* argv[])
 	glewInit();
 	
 	glutReshapeFunc(changeViewPort);
+	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_BLEND);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
@@ -168,14 +206,18 @@ int main(int argc, char* argv[]) {
 	teapot = initObject(objectFilePath);
 
 	Camera = initCamera();
+	Light = initLight();
 	//run from cmd, use \InteractiveCompGraph\InteractiveCompGraph\Debug>InteractiveCompGraph ../InteractiveCompGraph/Files/teapot.obj
 	//teapotShader.BuildFiles("../InteractiveCompGraph/Shaders/objectShaderVert.glsl", "../InteractiveCompGraph/Shaders/objectShaderFrag.glsl");
 	teapotShader.BuildFiles("./Shaders/objectShaderVert.glsl", "./Shaders/objectShaderFrag.glsl"); //run from Visual Studio
 	teapotShader.RegisterUniform(0, "VtoPMatrix");
 	teapotShader.RegisterUniform(1, "WtoVMatrix");
 	teapotShader.RegisterUniform(2, "MtoWMatrix");
+	teapotShader.RegisterUniform(3, "NormalMatrix");
+	teapotShader.RegisterUniform(4, "LightPosition");
+	teapotShader.RegisterUniform(5, "LightWtoVMatrix");
+	teapotShader.RegisterUniform(6, "CameraPosition");
 
-	
 	initObjectVAO();
 
 	glutMainLoop();
