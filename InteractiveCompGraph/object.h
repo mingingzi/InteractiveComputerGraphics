@@ -20,6 +20,7 @@ private:
 	cyTriMesh mesh;
 	cyPoint3f *vertex;
 	cyPoint3f *normal;
+	cyPoint3f *texture;
 	cyMatrix4f MtoWMatrix;
 	cyMatrix4f normalMatrix;
 	float numFace;
@@ -33,6 +34,8 @@ public:
 	void getVertex(cyTriMesh);
 	//get normal
 	void getNormal(cyTriMesh);
+	void getTexture(cyTriMesh);
+	cyTriMesh returnMesh();
 	// get model matrix
 	void calModelMatrix(cyTriMesh);
 	void calNormalMatrix(cyMatrix4f);
@@ -40,6 +43,7 @@ public:
 	int returnNumFace();
 	cyPoint3f* returnVertex();
 	cyPoint3f* returnNormal();
+	cyPoint3f* returnTexture();
 	cyMatrix4f returnMtoWMatrix();
 	cyMatrix4f returnNormalMatrix();
 	cyPoint3f returnObjectCenter();

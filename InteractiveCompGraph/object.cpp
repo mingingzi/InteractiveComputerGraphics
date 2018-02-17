@@ -52,6 +52,21 @@ void object::getNormal(cyTriMesh mesh) {
 	}
 }
 
+void object::getTexture(cyTriMesh mesh) {
+	unsigned int t_tSize = mesh.NF() * 3;
+	texture = new cyPoint3f[t_tSize];
+	for (int i = 0; i < mesh.NF(); i++) {
+		cyTriMesh::TriFace temp = mesh.FT(i);
+		unsigned int *t_index = temp.v;
+		unsigned int a = t_index[0];
+		unsigned int b = t_index[1];
+		unsigned int c = t_index[2];
+		texture[3 * i] = mesh.VT(a);
+		texture[3 * i + 1] = mesh.VT(b);
+		texture[3 * i + 2] = mesh.VT(c);
+	}
+}
+
 void object::calModelMatrix(cyTriMesh mesh) {
 	MtoWMatrix.SetIdentity();
 	
@@ -86,6 +101,7 @@ object::object(char *filename) {
 	object::getMesh(filename);
 	object::getVertex(mesh);
 	object::getNormal(mesh);
+	object::getTexture(mesh);
 	object::calModelMatrix(mesh);
 	object::calNormalMatrix(MtoWMatrix);
 	numFace = mesh.NF();
@@ -102,7 +118,12 @@ cyPoint3f* object::returnVertex() {
 cyPoint3f* object::returnNormal() {
 	return normal;
 }
-
+cyPoint3f* object::returnTexture() {
+	return texture;
+}
+cyTriMesh object::returnMesh() {
+	return mesh;
+}
 cyMatrix4f object::returnMtoWMatrix() {
 	return MtoWMatrix;
 }

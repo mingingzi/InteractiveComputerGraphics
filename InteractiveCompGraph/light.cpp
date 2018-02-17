@@ -10,7 +10,7 @@
 
 light::light() {};
 const float light::ROTATION_ANGLE = M_PI / 360 * 0.1;
-const float light::MOVEMENT_SPEED = 0.005f;
+const float light::MOVEMENT_SPEED = 0.1f;
 light::light(cyPoint3f p, cyPoint3f f, cyPoint3f u) {
 	position = p;
 	front = f;
@@ -27,8 +27,8 @@ cyPoint3f light::returnLightPosition() {
 }
 
 void light::rotate(int dx, int dy) {
-	WtoVMatrix *= cy::Matrix4<float>::MatrixRotationY(-dy * ROTATION_ANGLE);
-	WtoVMatrix *= cy::Matrix4<float>::MatrixRotationX(-dx * ROTATION_ANGLE);
+	WtoVMatrix *= cy::Matrix4<float>::MatrixRotationY(-dy * ROTATION_ANGLE * MOVEMENT_SPEED);
+	WtoVMatrix *= cy::Matrix4<float>::MatrixRotationX(-dx * ROTATION_ANGLE * MOVEMENT_SPEED);
 }
 cyMatrix4f light::returnLightWtoVMatrix() {
 	return WtoVMatrix;

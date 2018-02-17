@@ -8,13 +8,20 @@
 #include <object.h>
 #include "light.h"
 #include <camera.h>
-
+#include <Files\lodepng.h>
 
 object teapot;
+cy::TriMesh trimesh_teapot;
 cyGLSLProgram teapotShader;
+GLuint programID;
+GLuint locationID;
 GLuint teapotVAO;
 GLuint teapotV_VBO;
 GLuint teapotN_VBO;
+GLuint teapotT_VBO;
+
+GLuint tex_obj_1;
+GLuint tex_obj_2;
 
 camera Camera;
 light Light;
@@ -26,17 +33,25 @@ cyPoint3f up = cyPoint3f(0.0f, 1.0f, 0.0f);
 int frustum = 0;
 int mouseState, mouseButton, mousex = 0, mousey = 0;
 
+std::vector<unsigned char> image1;
+std::vector<unsigned char> image2;
+unsigned img_width = 512;
+unsigned img_height = 512;
+
 object initObject(char *filename);
 camera initCamera();
 light initLight();
+
 object initObject(char *filename) {
 	object object(filename);
+	trimesh_teapot.LoadFromFileObj(filename);
 	return object;
 }
 void initObjectVAO() {
 	int numF = teapot.returnNumFace();
 	cyPoint3f* newVertex = teapot.returnVertex();
 	cyPoint3f* newNormal = teapot.returnNormal();
+	cyPoint3f* newTexture = teapot.returnTexture();
 	glGenVertexArrays(1, &teapotVAO);
 	glBindVertexArray(teapotVAO);
 
@@ -55,6 +70,44 @@ void initObjectVAO() {
 	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, teapotN_VBO);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	// teapot texture buffer
+	glGenBuffers(1, &teapotT_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, teapotT_VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cyPoint3f) * numF * 3, newTexture, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, teapotT_VBO);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glBindVertexArray(0);
+}
+
+void initTexture(){
+	//diffuse
+	std::string file1(trimesh_teapot.M(0).map_Kd);
+	unsigned error = lodepng::decode(image1, img_width, img_height, "Files/" + file1);
+	if (error) std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
+
+	glGenTextures(1, &tex_obj_1);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex_obj_1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &image1[0]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	//specular
+	std::string file2(trimesh_teapot.M(0).map_Ks);
+	std::cout << file2;
+	error = lodepng::decode(image2, img_width, img_height, "Files/" + file2);
+
+	glGenTextures(1, &tex_obj_2);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, tex_obj_2);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &image2[0]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glBindVertexArray(0);
 }
@@ -77,6 +130,11 @@ light initLight() {
 	return Light;
 }
 
+void setShaders() {
+	teapotShader.BuildFiles("./Shaders/objectShaderVert.glsl", "./Shaders/objectShaderFrag.glsl"); //run from Visual Studio
+	programID = teapotShader.GetID();
+}
+
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -91,6 +149,15 @@ void display()
 	teapotShader.SetUniform(4, Light.returnLightPosition());
 	teapotShader.SetUniform(5, Light.returnLightWtoVMatrix());
 	teapotShader.SetUniform(6, Camera.returnPosition());
+	locationID = glGetUniformLocation(programID, "TextureDiffuse");
+	glUniform1i(locationID, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex_obj_1);
+
+	locationID = glGetUniformLocation(programID, "TextureSpecular");
+	glUniform1i(locationID, 1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, tex_obj_2);
 
 	glBindVertexArray(teapotVAO);
 	glDrawArrays(GL_TRIANGLES, 0, sizeof(cyPoint3f) * numF);
@@ -188,7 +255,7 @@ void initialize(int argc, char* argv[])
 	
 	glutReshapeFunc(changeViewPort);
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_BLEND);
+	glEnable(GL_TEXTURE_2D);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
@@ -207,9 +274,8 @@ int main(int argc, char* argv[]) {
 
 	Camera = initCamera();
 	Light = initLight();
-	//run from cmd, use \InteractiveCompGraph\InteractiveCompGraph\Debug>InteractiveCompGraph ../InteractiveCompGraph/Files/teapot.obj
-	//teapotShader.BuildFiles("../InteractiveCompGraph/Shaders/objectShaderVert.glsl", "../InteractiveCompGraph/Shaders/objectShaderFrag.glsl");
-	teapotShader.BuildFiles("./Shaders/objectShaderVert.glsl", "./Shaders/objectShaderFrag.glsl"); //run from Visual Studio
+
+	setShaders();
 	teapotShader.RegisterUniform(0, "VtoPMatrix");
 	teapotShader.RegisterUniform(1, "WtoVMatrix");
 	teapotShader.RegisterUniform(2, "MtoWMatrix");
@@ -219,7 +285,7 @@ int main(int argc, char* argv[]) {
 	teapotShader.RegisterUniform(6, "CameraPosition");
 
 	initObjectVAO();
-
+	initTexture();
 	glutMainLoop();
 	return 0;
 }
