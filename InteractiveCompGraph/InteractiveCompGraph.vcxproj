@@ -126,6 +126,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
+    <ClInclude Include="Files\cyGL.h" />
     <ClInclude Include="Files\cyMatrix.h" />
     <ClInclude Include="initialization.h" />
     <ClInclude Include="light.h" />
@@ -134,6 +135,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\objectShaderFrag.glsl" />
+    <None Include="Shaders\planeShaderFrag.glsl" />
+    <None Include="Shaders\planeShaderVert.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="Files\cube.obj" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

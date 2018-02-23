@@ -50,8 +50,16 @@
     <ClInclude Include="lodepng.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Files\cyGL.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\objectShaderFrag.glsl" />
+    <None Include="Shaders\planeShaderFrag.glsl" />
+    <None Include="Shaders\planeShaderVert.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="Files\cube.obj" />
   </ItemGroup>
 </Project>

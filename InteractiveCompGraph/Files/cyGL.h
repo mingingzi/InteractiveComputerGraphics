@@ -585,6 +585,7 @@ namespace cy {
 
 	protected:
 		void GenerateBuffer();	//!< Generates the frame buffer and initializes the texture
+	protected:
 		void SetSize(GLsizei width, GLsizei height) { bufferWidth = width; bufferHeight = height; }	//!< Sets the size of the frame buffer
 	};
 
